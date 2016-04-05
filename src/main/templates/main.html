@@ -1,0 +1,18 @@
+<html>
+<head>
+	<title th:include="${page} :: title">This title will be replaced!</title>
+	<link rel="stylesheet" type="text/css" href="css/common.css" />
+</head>
+<body>
+	<ul>
+		<li><a href="/">Home</a></li>
+		<li><a href="/about.html">About</a></li>
+	</ul> 
+	<article th:include="${page} :: article">
+		<p>This content will be replaced!</p>	
+	</article> 
+	<footer>
+		&copy; 2014 All rights reserved
+	</footer>
+</body>
+</html>

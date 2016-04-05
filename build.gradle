@@ -1,0 +1,99 @@
+import groovy.io.FileType
+import org.thymeleaf.TemplateEngine
+import org.thymeleaf.templateresolver.*
+import org.thymeleaf.context.Context
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'http://dl.bintray.com/robfletcher/gradle-plugins' }
+    }
+    dependencies {
+        classpath "org.thymeleaf:thymeleaf:2.1.3.RELEASE"
+        classpath "org.gradle.plugins:gradle-compass:1.0.7"
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'compass'
+compass {
+    cssDir = file('build/site/css')
+    sassDir = file('src/main/sass')
+}
+
+/* These three tasks build our site */
+task("generateSite", group: "Site Generator", dependsOn: "compileSass", description: "Outputs site to build directory") << {
+    processFiles()
+}
+
+task("preview", group: "Site Generator", dependsOn:"generateSite", description: "Opens site with Safari") << {
+    "open -a safari file://${file("build/site").absolutePath}/index.html".execute()
+}
+
+task("clean",  group: "Site Generator", description: "Deletes the generated site") << {
+    file("build").deleteDir()
+}
+
+/* Recurse through the src/main/content directory and run each file through Thymeleaf or just copy it */
+def processFiles() {
+    def templateEngine = createTemplateEngine()
+    file("src/main/content").eachFileRecurse(FileType.FILES) { f ->
+        def template = getTemplateForFile(f)
+        if (template) {
+            processThymeleafTemplate(templateEngine, f, template)
+        }
+        else {
+            copyFileWithoutProcessing(f)
+        }
+    }
+}
+
+/* Instantiate the Thymeleaf templating engine */
+def createTemplateEngine() {
+    TemplateEngine templateEngine = new TemplateEngine()
+    TemplateResolver fileTemplateResolver = new FileTemplateResolver()
+    fileTemplateResolver.setTemplateMode("HTML5")
+    templateEngine.setTemplateResolver(fileTemplateResolver)
+    return templateEngine
+}
+
+/* Return a thymeleaf template if the file is an HTML page and contains a template meta tag, otherwise return null */
+def getTemplateForFile(file) {
+    if (!file.absolutePath.endsWith(".html")) {
+        return null
+    }
+
+    def template = null
+    def root = new XmlSlurper().parse(file)  
+    root.head.meta.each { meta ->
+        if (meta.@name == "template") {
+          template = meta.@content
+        }
+    }
+    return template
+}
+
+/* Run a file through Thymeleaf using the specified template */
+def processThymeleafTemplate(templateEngine, f, template) {
+    println("Processing ${f} with template:${template}")
+    Context context = new Context(Locale.US, [page:f])
+    createFileWithDirectories(f).write(templateEngine.process(file("src/main/templates/${template}.html").absolutePath, context))
+}
+
+/* Copy a file to the build directory */
+def copyFileWithoutProcessing(f) {
+    println("Copying ${f} to build directory")
+    createFileWithDirectories(f).bytes = f.bytes
+}
+
+/* Creates a file including any directories along the path which do not exist */
+def createFileWithDirectories(f) {
+    def filePath = f.absolutePath
+    def relativePath = filePath.replace(file("src/main/content/").absolutePath, "")
+    def newFile = file("build/site/${relativePath}")
+    newFile.getParentFile().mkdirs()
+    return newFile
+}

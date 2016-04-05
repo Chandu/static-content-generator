@@ -1,0 +1,24 @@
+@import "compass/reset";
+
+body {
+	background-color:#143F8F;
+	color:white;
+	padding: 1em;
+}
+
+#{headings()}, ul, p {
+	margin-bottom:1em;
+}
+
+h1 {
+	font-weight: bold;
+    font-size:200%;
+}
+
+a {
+	color:white;
+}
+
+footer {
+	font-style: italic;
+}
