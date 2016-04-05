@@ -1,3 +1,5 @@
 /build
 .gradle
+.jruby
 /local.properties
+.sass-cache
