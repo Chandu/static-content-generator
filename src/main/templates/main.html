@@ -1,18 +1,20 @@
 <html>
-<head>
-	<title th:include="${page} :: title">This title will be replaced!</title>
-	<link rel="stylesheet" type="text/css" href="css/common.css" />
-</head>
-<body>
-	<ul>
-		<li><a href="/">Home</a></li>
-		<li><a href="/about.html">About</a></li>
-	</ul> 
-	<article th:include="${page} :: article">
-		<p>This content will be replaced!</p>	
-	</article> 
-	<footer>
-		&copy; 2014 All rights reserved
-	</footer>
-</body>
+  <head>
+    <base href="../../../build/site/" th:remove="all"/>
+    <title th:include="${page} :: title">This title will be replaced!</title>
+    <link rel="stylesheet" type="text/css" href="assets/css/common.css" />
+    <script data-main="assets/js/app_local" src="assets/lib/require.js"></script>
+  </head>
+  <body>
+    <div th:replace="templates/fragments/menu :: mainMenu">
+      Main Menu Area
+    </div>
+
+    <article th:include="${page} :: article">
+      <p>This content will be replaced!</p>
+    </article>
+    <footer>
+      &copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2015</span> All rights reserved
+    </footer>
+  </body>
 </html>

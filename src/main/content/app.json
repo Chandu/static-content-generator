@@ -1,0 +1,7 @@
+{
+  "test": "Default",
+  "menu": [
+    {"outcome": "index", "title": "Home"},
+    {"outcome": "about", "title": "About"}
+  ]
+}
