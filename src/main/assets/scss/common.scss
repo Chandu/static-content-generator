@@ -49,7 +49,13 @@
 @import "bootstrap/utilities";
 @import "bootstrap/responsive-utilities";
 
+body {
+  padding-top: 50px;
+}
 
 footer {
   font-style: italic;
 }
+
+@import "sticky-footer"
+
