@@ -24,7 +24,7 @@
       <!-- main menu -->
       <div id="mainMenu" class="collapse navbar-collapse">
         <ul class="nav navbar-nav">
-          <li th:each="item: ${json.menu}">
+          <li th:each="item: ${json.menu}" class="" th:classappend="${page eq item.outcome ? 'active' : ''}">
             <a href="#" th:href="${item.outcome + '.html'}" th:text="${item.title}">
               Menu item 1
             </a>
