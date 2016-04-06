@@ -1,9 +1,16 @@
 import groovy.io.FileType
+
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.templateresolver.*
 import org.thymeleaf.context.Context
+
 import com.eclipsesource.json.*
 import groovy.json.JsonSlurper
+
+import io.bit3.jsass.CompilationException;
+import io.bit3.jsass.Compiler;
+import io.bit3.jsass.Options;
+
 
 buildscript {
   repositories {
@@ -11,8 +18,8 @@ buildscript {
     maven { url "http://dl.bintray.com/robfletcher/gradle-plugins" }
   }
   dependencies {
+    classpath "io.bit3:jsass:5.0.0"
     classpath "org.thymeleaf:thymeleaf:3.0.0.BETA02"
-    classpath "com.github.robfletcher:compass-gradle-plugin:2.0.6"
     classpath "com.eclipsesource.minimal-json:minimal-json:0.9.4"
   }
 }
@@ -20,6 +27,12 @@ buildscript {
 repositories {
   mavenCentral()
 }
+
+
+apply plugin:'base'
+
+
+/* These tasks build our site */
 
 task copyAssets(type: Copy) {
   from('src/main/assets') {
@@ -37,22 +50,110 @@ task copyAssets(type: Copy) {
   //with dataContent
 }
 
-apply plugin: "com.github.robfletcher.compass"
-compass {
-  cssDir = file('build/site/assets/css')
-  sassDir = file('src/main/assets/scss')
-  importPath = files('src/main/assets/lib/bootstrap/stylesheets')
+
+task compileSass(type: CompileSass, group: "Site Generator", description: "Compile site stylesheets") {
 }
 
-/* These three tasks build our site */
-task generateSite(type: Generate, group: "Site Generator", dependsOn: ['compassCompile', 'copyAssets'], description: "Outputs site to build directory") {
+
+task generateSite(type: GenerateHtml, group: "Site Generator", dependsOn: ['compileSass', 'copyAssets'], description: "Outputs site to build directory") {
 }
+
 
 task("preview", group: "Site Generator", dependsOn:"generateSite", description: "Opens site with Safari") << {
   "open -a safari file://${file("build/site").absolutePath}/index.html".execute()
 }
 
-class Generate extends DefaultTask {
+
+/**
+ * compile Sass files with the aid of jsass.
+ * jsass use libsass (native implementation of sass compiler), thus
+ * this task will be functional on Windows, Linux, add Mac OS
+ */
+class CompileSass extends DefaultTask {
+  @InputDirectory
+  def sassDir = project.file('src/main/assets/scss')
+  @InputFiles
+  def importPath = project.files('src/main/assets/lib/bootstrap/stylesheets')
+
+  @OutputDirectory
+  def cssDir = project.file('build/site/assets/css')
+
+  Compiler compiler = new Compiler();
+  Options options = new Options();
+
+
+  @TaskAction
+  public void perform() {
+    initCompiler()
+    processScssDir(sassDir)
+  }
+
+
+  /**
+   * Sass compiler initialization
+   * TODO: more configuration parameters could be handled here
+   * see http://jsass.readthedocs.org/en/latest/options.html
+   */
+  def initCompiler() {
+    if (importPath != null) {
+      importPath.each { f ->
+        options.getIncludePaths().add(f);
+      }
+    }
+  }
+
+
+  /**
+   * go through specified dir, containing SCSS files and compile them
+   */
+  def processScssDir(f) {
+    f.eachDir() { d ->
+      processScssDir(d)
+    }
+    f.eachFileMatch(~/^[^_].*\.scss/) {file ->
+      compileSass(file)
+    }
+  }
+
+
+  /**
+   * compile given SCSS file
+   */
+  def compileSass(File f) {
+    URI inputFile = f.toURI();
+    File oF = getOutputFile(f)
+    URI outputFile = oF.toURI();
+
+    try {
+      oF.write(compiler.compileFile(inputFile, outputFile, options).getCss())
+
+      println("Compiled successfully");
+    } catch (CompilationException e) {
+      println("Compilation of '${inputFile}' to '${outputFile}' failed.");
+      println(e.getErrorText());
+    }
+  }
+
+
+  /**
+   * get the CSS file, which should contain compilation results
+   */
+  def getOutputFile(f) {
+    def filePath = f.absolutePath
+    def relativePath = sassDir.toURI().relativize(f.toURI()).toString()
+    def newFile = project.file("${cssDir}/${relativePath}" - '.scss' + '.css')
+    //newFile.createNewFile()
+    //newFile.getParentFile().mkdirs()
+
+    return newFile
+  }
+}
+
+
+/**
+ * generate static html files from Thymeleaf templates
+ */
+class GenerateHtml extends DefaultTask {
   File templateRoot = project.file("src/main")
 
   @InputDirectory
@@ -63,26 +164,34 @@ class Generate extends DefaultTask {
   @OutputDirectory
   File generatedFileDir = project.file("${project.buildDir}/site")
 
+
+  def templateEngine = createTemplateEngine()
+  // application-wide JSON object (available for each page)
+  def globalJson = Json.parse("{}")
+
   @TaskAction
   public void perform() {
-    def templateEngine = createTemplateEngine()
-    def json = Json.parse("{}")
+    init()
+
+    processSourceDir(srcContent)
+  }
+
+
+  /**
+   * initialization
+   */
+  def init() {
     def jsonFile = new File("${srcContent}/app.json")
+
     if (jsonFile.exists()) {
-      json = Json.parse(jsonFile.text)
-    }
-    srcContent.eachFileRecurse(FileType.FILES) { f ->
-      def template = getTemplateFromFile(f)
-      if (template) {
-        processThymeleafTemplate(templateEngine, f, template, json)
-      }
-      else {
-        //copyFileWithoutProcessing(f)
-      }
+      globalJson = Json.parse(jsonFile.text)
     }
   }
 
-  /* Instantiate the Thymeleaf templating engine */
+
+  /**
+   * instantiate the Thymeleaf templating engine
+   */
   private TemplateEngine createTemplateEngine() {
     TemplateEngine templateEngine = new TemplateEngine()
     FileTemplateResolver fileTemplateResolver = new FileTemplateResolver()
@@ -95,13 +204,27 @@ class Generate extends DefaultTask {
   }
 
 
-  /* Return a thymeleaf template if the file is an HTML page and contains a template meta tag, otherwise return null */
-  public String  getTemplateFromFile(file) {
-    if (!file.absolutePath.endsWith(".html")) {
-      return null
+  /**
+   * go through specified dir, containing HTML files and process them
+   */
+  def processSourceDir(root) {
+    root.eachDir() { d ->
+      processSourceDir(d)
     }
+    root.eachFileMatch(~/^[^_].*\.html/) {file ->
+      processThymeleafFile(file)
+    }
+  }
 
+
+  /**
+   * get a Thymeleaf template, specified in meta tag of given HTML file
+   *
+   * @return    found template or null
+   */
+  public String  getTemplateFromFile(file) {
     def template = null
+
     def root = new XmlSlurper().parse(file)
     root.head.meta.each { meta ->
       if (meta.@name == "template") {
@@ -113,11 +236,25 @@ class Generate extends DefaultTask {
   }
 
 
-  /* Run a file through Thymeleaf using the specified template */
-  public void processThymeleafTemplate(templateEngine, f, template, globalJson) {
+  /**
+   * process given Thymeleaf file
+   */
+  public void processThymeleafFile(f) {
+    def template = getTemplateFromFile(f)
     println("Processing ${f} with template:${template}")
+    Context context = new Context(Locale.US,
+      [page:getPageNameForFile(f), json: getJsonForFile(f)])
+
+    getOutputFile(f).write(templateEngine.process(template, context))
+  }
+
+
+  /**
+   * get the JSON "back-end" object, available for the specified Thymeleaf file
+   */
+  def getJsonForFile(f) {
     def json = globalJson
-    def jf = project.file("${f}".replaceAll(".html", ".json"))
+    def jf = project.file("${f}" - ".html" + ".json")
     if (jf.exists()) {
       println("Processing JSON: ${jf}")
       json = Json.parse("{}")
@@ -125,18 +262,8 @@ class Generate extends DefaultTask {
       json.merge(Json.parse(jf.text))
     }
     def jsonSlurp = new JsonSlurper()
-    Context context = new Context(Locale.US, [page:getPageNameForFile(f), json:jsonSlurp.parseText(json.toString())])
-    createFileWithDirectories(f).write(templateEngine.process(template, context))
-  }
 
-
-  /* Creates a file including any directories along the path which do not exist */
-  def createFileWithDirectories(f) {
-    def filePath = f.absolutePath
-    def relativePath = srcContent.toURI().relativize(f.toURI()).toString()
-    def newFile = project.file("${generatedFileDir}/${relativePath}")
-    newFile.getParentFile().mkdirs()
-    return newFile
+    return jsonSlurp.parseText(json.toString())
   }
 
 
@@ -149,4 +276,12 @@ class Generate extends DefaultTask {
     return relativePath - ".html"
   }
 
+
+  /* Creates a file including any directories along the path which do not exist */
+  def getOutputFile(f) {
+    def filePath = f.absolutePath
+    def relativePath = srcContent.toURI().relativize(f.toURI()).toString()
+
+    return  project.file("${generatedFileDir}/${relativePath}")
+  }
 }
