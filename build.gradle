@@ -125,7 +125,7 @@ class Generate extends DefaultTask {
       json.merge(Json.parse(jf.text))
     }
     def jsonSlurp = new JsonSlurper()
-    Context context = new Context(Locale.US, [page:getTemplateForFile(f), json:jsonSlurp.parseText(json.toString())])
+    Context context = new Context(Locale.US, [page:getPageNameForFile(f), json:jsonSlurp.parseText(json.toString())])
     createFileWithDirectories(f).write(templateEngine.process(template, context))
   }
 
@@ -141,13 +141,12 @@ class Generate extends DefaultTask {
 
 
   /**
-   *  calculate the template reference for given file.
-   *  calculated reference will be correctly resolved by file template resolver
+   *  calculate the page name (outcome) for given file.
    */
-  public String  getTemplateForFile(f) {
+  public String  getPageNameForFile(f) {
     def filePath = f.absolutePath
-    def relativePath = templateRoot.toURI().relativize(f.toURI()).toString()
-    return relativePath.replaceAll(".html", "")
+    def relativePath = srcContent.toURI().relativize(f.toURI()).toString()
+    return relativePath - ".html"
   }
 
 }

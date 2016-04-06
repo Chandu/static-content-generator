@@ -1,7 +1,7 @@
 <html>
   <head>
     <base href="../../../build/site/" th:remove="all"/>
-    <title th:include="${page} :: title">This title will be replaced!</title>
+    <title th:include="|content/${page}| :: title">This title will be replaced!</title>
     <link rel="stylesheet" type="text/css" href="assets/css/common.css" />
     <script data-main="assets/js/app_local" src="assets/lib/require.js"></script>
   </head>
@@ -10,7 +10,7 @@
       Main Menu Area
     </div>
 
-    <article th:include="${page} :: article">
+    <article th:include="|content/${page}| :: article">
       <p>This content will be replaced!</p>
     </article>
     <footer>
