@@ -5,33 +5,29 @@
     <script data-main="assets/js/app_local" src="assets/lib/require.js"></script>
   </head>
   <body>
-    <div class="navbar navbar-default" th:fragment="mainMenu">
-      <!-- hamburger -->
-      <div class="navbar-header">
-        <button
-           type="button"
-           class="navbar-toggle collapsed"
-           data-toggle="collapse"
-           data-target="#mainMenu"
-           aria-expanded="false">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-      </div>
 
-      <!-- main menu -->
-      <div id="mainMenu" class="collapse navbar-collapse">
-        <ul class="nav navbar-nav">
-          <li th:each="item: ${json.menu}" class="" th:classappend="${page eq item.outcome ? 'active' : ''}">
-            <a href="#" th:href="${item.outcome + '.html'}" th:text="${item.title}">
-              Menu item 1
-            </a>
-          </li>
-          <li th:remove="all"><a href="#">Menu item 2</a></li>
-        </ul>
+    <nav class="navbar navbar-inverse navbar-fixed-top" th:fragment="mainMenu">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#" th:text="${json.projectName}" th:href="|${json.homePage}.html|">Project name</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active" th:remove="all"><a href="#">Home</a></li>
+            <li th:each="item: ${json.menu}" class="" th:classappend="${page eq item.outcome ? 'active' : ''}">
+              <a href="#about" th:href="|${item.outcome}.html|" th:text="${item.title}"> About</a>
+            </li>
+            <li th:remove="all"><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
       </div>
-    </div>
+    </nav>
+
   </body>
 </html>
