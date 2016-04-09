@@ -254,7 +254,7 @@ class GenerateHtml extends DefaultTask {
    * process given Thymeleaf file
    */
   public void processThymeleafFile(f) {
-    def template = "content/${getPageNameForFile(f)}"
+    def template = getTemplateForFile(f)
     println("Processing ${f}")
     Context context = new Context(Locale.US,
       [json: getJsonForFile(f)])
@@ -282,11 +282,11 @@ class GenerateHtml extends DefaultTask {
 
 
   /**
-   *  calculate the page name (outcome) for given file.
+   *  calculate the template name (relative path) for given file.
    */
-  public String  getPageNameForFile(f) {
+  public String  getTemplateForFile(f) {
     def filePath = f.absolutePath
-    def relativePath = srcContent.toURI().relativize(f.toURI()).toString()
+    def relativePath = templateRoot.toURI().relativize(f.toURI()).toString()
     return relativePath - ".html"
   }
 
