@@ -256,8 +256,7 @@ class GenerateHtml extends DefaultTask {
   public void processThymeleafFile(f) {
     def template = getTemplateForFile(f)
     println("Processing ${f}")
-    Context context = new Context(Locale.US,
-      [json: getJsonForFile(f)])
+    Context context = new Context(Locale.US, getJsonForFile(f))
 
     getOutputFile(f).write(templateEngine.process(template, context))
   }
