@@ -78,6 +78,9 @@ class CompileSass extends DefaultTask {
   @OutputDirectory
   def cssDir = project.file('build/site/assets/css')
 
+  String sasscCmd = '/usr/bin/sassc'
+  String[] sasscArgs;
+
   Compiler compiler = new Compiler();
   Options options = new Options();
 
@@ -95,9 +98,17 @@ class CompileSass extends DefaultTask {
    * see http://jsass.readthedocs.org/en/latest/options.html
    */
   def initCompiler() {
+    sasscArgs = new String[importPath.size() * 2 + 3]
+    sasscArgs[0] = sasscCmd
+    def argCnt = 1
     if (importPath != null) {
       importPath.each { f ->
-        options.getIncludePaths().add(f);
+        if (sasscCmd != null) {
+          sasscArgs[argCnt++] = "-I"
+          sasscArgs[argCnt++] = "${f.absolutePath}"
+        } else {
+          options.getIncludePaths().add(f);
+        }
       }
     }
   }
@@ -122,15 +133,37 @@ class CompileSass extends DefaultTask {
   def compileSass(File f) {
     URI inputFile = f.toURI();
     File oF = getOutputFile(f)
+    oF.createNewFile()
     URI outputFile = oF.toURI();
 
-    try {
-      oF.write(compiler.compileFile(inputFile, outputFile, options).getCss())
+    if (sasscCmd != null) {
+      //def cmdToRun = "${sasscCmd} ${sasscArgs} ${f} ${oF}"
+      //println "Start sassc: '${cmdToRun}'"
+      String inFile = "${f}"
+      String outFile = "${oF}"
+      def argCnt = sasscArgs.length
+      sasscArgs[argCnt - 2] = inFile
+      sasscArgs[argCnt - 1] = outFile
+      def process = new ProcessBuilder(sasscArgs)
+        .inheritIO()
+        //.redirectErrorStream(true)
+        .start()
+      process.waitFor();
+      def retVal = process.exitValue()
+      if (retVal == 0) {
+        println("Compiled successfully");
+      } else {
+        println("Reurn value = '${retVal}'")
+      }
+    } else {
+      try {
+        oF.write(compiler.compileFile(inputFile, outputFile, options).getCss())
 
-      println("Compiled successfully");
-    } catch (CompilationException e) {
-      println("Compilation of '${inputFile}' to '${outputFile}' failed.");
-      println(e.getErrorText());
+        println("Compiled successfully");
+      } catch (CompilationException e) {
+        println("Compilation of '${inputFile}' to '${outputFile}' failed.");
+        println(e.getErrorText());
+      }
     }
   }
 
