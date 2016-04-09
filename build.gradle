@@ -52,6 +52,8 @@ task copyAssets(type: Copy) {
 
 
 task compileSass(type: CompileSass, group: "Site Generator", description: "Compile site stylesheets") {
+  // if sassc is installed, then the path to sassc executable can be specified here
+  //sasscCmd = '/usr/bin/sassc'
 }
 
 
@@ -78,7 +80,7 @@ class CompileSass extends DefaultTask {
   @OutputDirectory
   def cssDir = project.file('build/site/assets/css')
 
-  String sasscCmd = '/usr/bin/sassc'
+  String sasscCmd = null
   String[] sasscArgs;
 
   Compiler compiler = new Compiler();
