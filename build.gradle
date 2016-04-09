@@ -251,30 +251,11 @@ class GenerateHtml extends DefaultTask {
 
 
   /**
-   * get a Thymeleaf template, specified in meta tag of given HTML file
-   *
-   * @return    found template or null
-   */
-  public String  getTemplateFromFile(file) {
-    def template = null
-
-    def root = new XmlSlurper().parse(file)
-    root.head.meta.each { meta ->
-      if (meta.@name == "template") {
-        template = meta.@content
-      }
-    }
-
-    return template
-  }
-
-
-  /**
    * process given Thymeleaf file
    */
   public void processThymeleafFile(f) {
-    def template = getTemplateFromFile(f)
-    println("Processing ${f} with template:${template}")
+    def template = "content/${getPageNameForFile(f)}"
+    println("Processing ${f}")
     Context context = new Context(Locale.US,
       [page:getPageNameForFile(f), json: getJsonForFile(f)])
 
