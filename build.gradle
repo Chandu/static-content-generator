@@ -257,7 +257,7 @@ class GenerateHtml extends DefaultTask {
     def template = "content/${getPageNameForFile(f)}"
     println("Processing ${f}")
     Context context = new Context(Locale.US,
-      [page:getPageNameForFile(f), json: getJsonForFile(f)])
+      [json: getJsonForFile(f)])
 
     getOutputFile(f).write(templateEngine.process(template, context))
   }

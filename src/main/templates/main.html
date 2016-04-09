@@ -9,7 +9,7 @@
 
     <base href="../../../build/site/" th:remove="all"/>
 
-    <title th:include="|content/${page}| :: title">This title will be replaced!</title>
+    <title th:replace="~{::%title} ?: _">This title will be replaced!</title>
     <link rel="stylesheet" type="text/css" href="assets/css/common.css" />
     <script data-main="assets/js/app_local" src="assets/lib/require.js"></script>
 
@@ -23,7 +23,7 @@
     <div class="container">
 
       <div class="starter-template">
-        <article th:include="|content/${page}| :: article">
+        <article th:replace="~{::%article} ?: _">
           <p>This content will be replaced!</p>
         </article>
       </div>

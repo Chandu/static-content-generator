@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html data-th-replace="templates/main">
   <head>
-    <title>Some words about </title>
+    <title data-th-ref="title">Some words about </title>
   </head>
   <body>
-    <article>
+    <article data-th-ref="article">
       <h1>About</h1>
       <h2>Json test:  [[${json.test}]]</h2>
       <p>Lorem ipsum...</p>
