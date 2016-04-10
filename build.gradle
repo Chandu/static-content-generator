@@ -268,12 +268,13 @@ class GenerateHtml extends DefaultTask {
    * get the JSON "back-end" object, available for the specified Thymeleaf file
    */
   def getJsonForFile(f) {
-    def json = globalJson
+    def json = Json.parse("{}")
+    json.merge(globalJson)
+    json.merge(Json.parse("{\"template\":\"${getTemplateForFile(f)}\"}"))
+
     def jf = project.file("${f}" - ".html" + ".json")
     if (jf.exists()) {
       println("Processing JSON: ${jf}")
-      json = Json.parse("{}")
-      json.merge(globalJson)
       json.merge(Json.parse(jf.text))
     }
     def jsonSlurp = new JsonSlurper()

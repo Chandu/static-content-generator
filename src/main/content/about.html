@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html data-th-replace="templates/main">
+<html data-th-replace="templates/main(pageTitle=~{::title/text()},pageContent=~{::article})">
   <head>
-    <title data-th-ref="title">Some words about</title>
+    <title>Some words about</title>
   </head>
   <body>
-    <article data-th-ref="article">
+    <article>
       <h1>About</h1>
       <h2>Json test:  [[${test}]]</h2>
       <p>Lorem ipsum...</p>

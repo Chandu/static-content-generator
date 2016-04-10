@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html data-th-replace="templates/main">
+<html data-th-replace="templates/main(pageTitle=~{::title/text()},pageContent=~{::article})">
   <head>
     <title data-th-ref="title">Contact</title>
   </head>
   <body>
     <article data-th-ref="article">
-      <h1>Contact</h1>
+      <h1>Contact [[${template}]]</h1>
       <p>How you can contact us...</p>
     </article>
   </body>

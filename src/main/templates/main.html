@@ -9,7 +9,7 @@
 
     <base href="../../../build/site/" th:remove="all"/>
 
-    <title th:replace="~{::%title} ?: _">This title will be replaced!</title>
+    <title data-th-text="|${projectName} :: | + ${pageTitle ? pageTitle: defaultTitle}" data-th-with="defaultTitle=~{this::title/text()}">This title will be replaced!</title>
     <link rel="stylesheet" type="text/css" href="assets/css/common.css" />
     <script data-main="assets/js/app_local" src="assets/lib/require.js"></script>
 
@@ -23,7 +23,7 @@
     <div class="container">
 
       <div class="starter-template">
-        <article th:replace="~{::%article} ?: _">
+        <article th:replace="${pageContent} ?: _">
           <p>This content will be replaced!</p>
         </article>
       </div>
