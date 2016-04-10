@@ -81,10 +81,10 @@ class CompileSass extends DefaultTask {
   def cssDir = project.file('build/site/assets/css')
 
   String sasscCmd = null
-  String[] sasscArgs;
+  String[] sasscArgs
 
-  Compiler compiler = new Compiler();
-  Options options = new Options();
+  Compiler compiler = null
+  Options options = null
 
 
   @TaskAction
@@ -100,8 +100,13 @@ class CompileSass extends DefaultTask {
    * see http://jsass.readthedocs.org/en/latest/options.html
    */
   def initCompiler() {
-    sasscArgs = new String[importPath.size() * 2 + 3]
-    sasscArgs[0] = sasscCmd
+    if (sasscCmd != null) {
+      sasscArgs = new String[importPath.size() * 2 + 3]
+      sasscArgs[0] = sasscCmd
+    } else {
+      compiler = new Compiler()
+      options = new Options()
+    }
     def argCnt = 1
     if (importPath != null) {
       importPath.each { f ->
