@@ -195,9 +195,12 @@ class CompileSass extends DefaultTask {
  */
 class GenerateHtml extends DefaultTask {
   File templateRoot = project.file("src/main")
+  @InputDirectory
+  File dataRoot = project.file("src/main/data")
 
   @InputDirectory
   File srcContent = project.file("src/main/content")
+  // TODO FIXME: should be removed?
   @InputDirectory
   File srcTemplates = project.file("src/main/templates")
 
@@ -221,7 +224,7 @@ class GenerateHtml extends DefaultTask {
    * initialization
    */
   def init() {
-    def jsonFile = new File("${srcContent}/app.json")
+    def jsonFile = new File("${dataRoot}/app.json")
 
     if (jsonFile.exists()) {
       globalJson = Json.parse(jsonFile.text)
@@ -263,21 +266,22 @@ class GenerateHtml extends DefaultTask {
   public void processThymeleafFile(f) {
     def template = getTemplateForFile(f)
     println("Processing ${f}")
-    Context context = new Context(Locale.US, getJsonForFile(f))
+    Context context = new Context(Locale.US, getDataForTemplate(template))
 
     getOutputFile(f).write(templateEngine.process(template, context))
   }
 
 
   /**
-   * get the JSON "back-end" object, available for the specified Thymeleaf file
+   * get the JSON "back-end" object, available for the specified
+   * Thymeleaf template
    */
-  def getJsonForFile(f) {
+  def getDataForTemplate(template) {
     def json = Json.parse("{}")
     json.merge(globalJson)
-    json.merge(Json.parse("{\"template\":\"${getTemplateForFile(f)}\"}"))
+    json.merge(Json.parse("{\"template\":\"${template}\"}"))
 
-    def jf = project.file("${f}" - ".html" + ".json")
+    def jf = project.file("${dataRoot}/${template}.json")
     if (jf.exists()) {
       println("Processing JSON: ${jf}")
       json.merge(Json.parse(jf.text))
