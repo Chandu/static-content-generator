@@ -65,6 +65,8 @@ task("preview", group: "Site Generator", dependsOn:"generateSite", description: 
   "open -a safari file://${file("build/site").absolutePath}/index.html".execute()
 }
 
+defaultTasks 'generateSite'
+
 
 /**
  * compile Sass files with the aid of jsass.
