@@ -7,11 +7,6 @@ import org.thymeleaf.context.Context
 import com.eclipsesource.json.*
 import groovy.json.JsonSlurper
 
-import io.bit3.jsass.CompilationException;
-import io.bit3.jsass.Compiler;
-import io.bit3.jsass.Options;
-
-
 buildscript {
   repositories {
     jcenter()
@@ -30,6 +25,15 @@ repositories {
 
 
 apply plugin:'base'
+apply plugin: 'com.github.mr-july.sass'
+
+
+sass {
+  //sasscCmd = '/usr/bin/sassc'
+  sassDir = project.file('src/main/assets/scss')
+  cssDir = project.file('build/site/assets/css')
+  importPath = project.files('src/main/assets/lib/bootstrap/stylesheets')
+}
 
 
 /* These tasks build our site */
@@ -51,12 +55,6 @@ task copyAssets(type: Copy) {
 }
 
 
-task compileSass(type: CompileSass, group: "Site Generator", description: "Compile site stylesheets") {
-  // if sassc is installed, then the path to sassc executable can be specified here
-  //sasscCmd = '/usr/bin/sassc'
-}
-
-
 task generateSite(type: GenerateHtml, group: "Site Generator", dependsOn: ['compileSass', 'copyAssets'], description: "Outputs site to build directory") {
 }
 
@@ -67,129 +65,6 @@ task("preview", group: "Site Generator", dependsOn:"generateSite", description: 
 
 defaultTasks 'generateSite'
 
-
-/**
- * compile Sass files with the aid of jsass.
- * jsass use libsass (native implementation of sass compiler), thus
- * this task will be functional on Windows, Linux, add Mac OS
- */
-class CompileSass extends DefaultTask {
-  @InputDirectory
-  def sassDir = project.file('src/main/assets/scss')
-  @InputFiles
-  def importPath = project.files('src/main/assets/lib/bootstrap/stylesheets')
-
-  @OutputDirectory
-  def cssDir = project.file('build/site/assets/css')
-
-  String sasscCmd = null
-  String[] sasscArgs
-
-  Compiler compiler = null
-  Options options = null
-
-
-  @TaskAction
-  public void perform() {
-    initCompiler()
-    processScssDir(sassDir)
-  }
-
-
-  /**
-   * Sass compiler initialization
-   * TODO: more configuration parameters could be handled here
-   * see http://jsass.readthedocs.org/en/latest/options.html
-   */
-  def initCompiler() {
-    if (sasscCmd != null) {
-      sasscArgs = new String[importPath.size() * 2 + 3]
-      sasscArgs[0] = sasscCmd
-    } else {
-      compiler = new Compiler()
-      options = new Options()
-    }
-    def argCnt = 1
-    if (importPath != null) {
-      importPath.each { f ->
-        if (sasscCmd != null) {
-          sasscArgs[argCnt++] = "-I"
-          sasscArgs[argCnt++] = "${f.absolutePath}"
-        } else {
-          options.getIncludePaths().add(f);
-        }
-      }
-    }
-  }
-
-
-  /**
-   * go through specified dir, containing SCSS files and compile them
-   */
-  def processScssDir(f) {
-    f.eachDir() { d ->
-      processScssDir(d)
-    }
-    f.eachFileMatch(~/^[^_].*\.scss/) {file ->
-      compileSass(file)
-    }
-  }
-
-
-  /**
-   * compile given SCSS file
-   */
-  def compileSass(File f) {
-    URI inputFile = f.toURI();
-    File oF = getOutputFile(f)
-    oF.createNewFile()
-    URI outputFile = oF.toURI();
-
-    if (sasscCmd != null) {
-      //def cmdToRun = "${sasscCmd} ${sasscArgs} ${f} ${oF}"
-      //println "Start sassc: '${cmdToRun}'"
-      String inFile = "${f}"
-      String outFile = "${oF}"
-      def argCnt = sasscArgs.length
-      sasscArgs[argCnt - 2] = inFile
-      sasscArgs[argCnt - 1] = outFile
-      def process = new ProcessBuilder(sasscArgs)
-        .inheritIO()
-        //.redirectErrorStream(true)
-        .start()
-      process.waitFor();
-      def retVal = process.exitValue()
-      if (retVal == 0) {
-        println("Compiled successfully");
-      } else {
-        println("Reurn value = '${retVal}'")
-      }
-    } else {
-      try {
-        oF.write(compiler.compileFile(inputFile, outputFile, options).getCss())
-
-        println("Compiled successfully");
-      } catch (CompilationException e) {
-        println("Compilation of '${inputFile}' to '${outputFile}' failed.");
-        println(e.getErrorText());
-      }
-    }
-  }
-
-
-  /**
-   * get the CSS file, which should contain compilation results
-   */
-  def getOutputFile(f) {
-    def filePath = f.absolutePath
-    def relativePath = sassDir.toURI().relativize(f.toURI()).toString()
-    def newFile = project.file("${cssDir}/${relativePath}" - '.scss' + '.css')
-    //newFile.createNewFile()
-    //newFile.getParentFile().mkdirs()
-
-    return newFile
-  }
-}
 
 
 /**
