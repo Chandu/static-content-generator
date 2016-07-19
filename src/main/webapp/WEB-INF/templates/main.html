@@ -1,19 +1,22 @@
-<html>
+<!DOCTYPE html>
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:th="http://www.thymeleaf.org">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
 
-    <base href="../../../build/site/" th:remove="all"/>
+    <base href="../../../../../build/site/" th:remove="all"/>
 
     <title data-th-text="|${projectName} :: | + ${pageTitle ? pageTitle: defaultTitle}" data-th-with="defaultTitle=~{this::title/text()}">This title will be replaced!</title>
-    <link rel="stylesheet" type="text/css" href="assets/css/common.css" />
-    <script data-main="assets/js/app_local" src="assets/lib/require.js"></script>
+    <link rel="stylesheet" type="text/css" href="resources/css/common.css" />
+    <script data-main="resources/js/app_local" src="resources/lib/require.js"></script>
 
-    <link rel="icon" href="assets/images/favicon.ico">
+    <link rel="icon" href="resources/images/favicon.ico"/>
   </head>
   <body>
     <div th:replace="templates/fragments/menu :: mainMenu">
@@ -33,7 +36,7 @@
     <footer class="footer">
       <div class="container">
         <p class="text-muted">
-        &copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2015</span> All rights reserved
+          &copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2015</span> All rights reserved
         </p>
       </div>
     </footer>

@@ -1,15 +1,24 @@
-<html>
+<!DOCTYPE html>
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:th="http://www.thymeleaf.org">
   <head>
-    <base href="../../../../build/site/"/>
-    <link rel="stylesheet" type="text/css" href="assets/css/common.css" />
-    <script data-main="assets/js/app_local" src="assets/lib/require.js"></script>
+    <base href="../../../../../../build/site/" />
+    <link rel="stylesheet" type="text/css" href="resources/css/common.css" />
+    <script data-main="resources/js/app_local" src="resources/lib/require.js"></script>
+    <title>Menu template</title>
   </head>
   <body>
 
     <nav class="navbar navbar-inverse navbar-fixed-top" th:fragment="mainMenu">
       <div class="container">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <button
+            type="button"
+            class="navbar-toggle collapsed"
+            data-toggle="collapse"
+            data-target="#navbar"
+            th:aria-expanded="false" aria-controls="navbar">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>

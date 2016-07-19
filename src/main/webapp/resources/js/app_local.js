@@ -3,7 +3,7 @@
 // Configure loading modules from the lib directory,
 // except 'app' ones,
 requirejs.config({
-    "baseUrl": "assets/lib",
+    "baseUrl": "resources/lib",
     "paths": {
       "bootstrap": "bootstrap/javascripts/bootstrap"
     },

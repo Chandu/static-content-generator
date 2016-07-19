@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <!-- this is an example of explicit main template usage, see other pages for conventional examples -->
-<html data-th-replace="templates/main(pageTitle=~{::title/text()},pageContent=~{::article})">
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:th="http://www.thymeleaf.org"
+  data-th-replace="templates/main(pageTitle=~{::title/text()},pageContent=~{::article})">
   <head>
     <title data-th-ref="title">My awesome web page</title>
   </head>
