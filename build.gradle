@@ -13,40 +13,42 @@ buildscript {
     maven { url "http://dl.bintray.com/robfletcher/gradle-plugins" }
   }
   dependencies {
-    classpath "io.bit3:jsass:5.0.0"
-    classpath "org.thymeleaf:thymeleaf:3.0.0.BETA02"
-    classpath "com.eclipsesource.minimal-json:minimal-json:0.9.4"
+    classpath "org.thymeleaf:thymeleaf:$thymeleaf_version"
+    classpath "com.eclipsesource.minimal-json:minimal-json:$minimalJson_version"
   }
+}
+
+plugins {
+  id 'groovy'
+  id 'war'
 }
 
 repositories {
   mavenCentral()
 }
 
-
-apply plugin:'base'
 apply plugin: 'com.github.mr-july.sass'
 
 
 sass {
   //sasscCmd = '/usr/bin/sassc'
-  sassDir = project.file('src/main/assets/scss')
-  cssDir = project.file('build/site/assets/css')
-  importPath = project.files('src/main/assets/lib/bootstrap/stylesheets')
+  sassDir = project.file('src/main/webapp/resources/scss')
+  cssDir = project.file('build/site/resources/css')
+  importPath = project.files('src/main/webapp/resources/lib/bootstrap/stylesheets')
 }
 
 
 /* These tasks build our site */
 
 task copyAssets(type: Copy) {
-  from('src/main/assets') {
+  from('src/main/webapp/resources') {
     exclude 'lib/bootstrap/images'
     exclude 'lib/bootstrap/javascripts/bootstrap'
     exclude 'lib/bootstrap/javascripts/bootstrap-*'
     exclude 'lib/bootstrap/stylesheets'
     exclude 'scss'
   }
-  into 'build/site/assets'
+  into 'build/site/resources'
   //exclude '**/*.bak'
 
   includeEmptyDirs = false
@@ -71,15 +73,15 @@ defaultTasks 'generateSite'
  * generate static html files from Thymeleaf templates
  */
 class GenerateHtml extends DefaultTask {
-  File templateRoot = project.file("src/main")
+  File templateRoot = project.file("src/main/webapp/WEB-INF")
   @InputDirectory
-  File dataRoot = project.file("src/main/data")
+  File dataRoot = project.file("src/main/webapp/WEB-INF/data")
 
   @InputDirectory
-  File srcContent = project.file("src/main/content")
+  File srcContent = project.file("src/main/webapp/WEB-INF/content")
   // TODO FIXME: should be removed?
   @InputDirectory
-  File srcTemplates = project.file("src/main/templates")
+  File srcTemplates = project.file("src/main/webapp/WEB-INF/templates")
 
   @OutputDirectory
   File generatedFileDir = project.file("${project.buildDir}/site")
