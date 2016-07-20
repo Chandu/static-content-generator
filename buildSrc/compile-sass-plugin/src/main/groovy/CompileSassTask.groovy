@@ -6,6 +6,7 @@ import org.gradle.api.tasks.*
 import io.bit3.jsass.CompilationException;
 import io.bit3.jsass.Compiler;
 import io.bit3.jsass.Options;
+import io.bit3.jsass.Output
 
 
 /**
@@ -21,6 +22,8 @@ class CompileSassTask extends DefaultTask {
 
   @OutputDirectory
   def cssDir = null
+  
+  boolean emitSourceMap = false
 
   String sasscCmd = null
   String[] sasscArgs
@@ -42,16 +45,19 @@ class CompileSassTask extends DefaultTask {
    * see http://jsass.readthedocs.org/en/latest/options.html
    */
   def initCompiler() {
+    int argCnt = 0
     if (sasscCmd != null) {
       int ips = importPath != null ? importPath.size() : 0
 
-      sasscArgs = new String[ips * 2 + 3]
-      sasscArgs[0] = sasscCmd
+      sasscArgs = new String[ips * 2 + 3 + (emitSourceMap ? 1 : 0)]
+      sasscArgs[argCnt++] = sasscCmd
+      if (emitSourceMap) {
+        sasscArgs[argCnt++] = "-m"
+      }
     } else {
       compiler = new Compiler()
       options = new Options()
     }
-    def argCnt = 1
     if (importPath != null) {
       importPath.each { f ->
         if (sasscCmd != null) {
@@ -96,9 +102,9 @@ class CompileSassTask extends DefaultTask {
       sasscArgs[argCnt - 2] = inFile
       sasscArgs[argCnt - 1] = outFile
       def process = new ProcessBuilder(sasscArgs)
-        .inheritIO()
-        //.redirectErrorStream(true)
-        .start()
+      .inheritIO()
+      //.redirectErrorStream(true)
+      .start()
       process.waitFor();
       def retVal = process.exitValue()
       if (retVal == 0) {
@@ -107,8 +113,18 @@ class CompileSassTask extends DefaultTask {
         println("Reurn value = '${retVal}'")
       }
     } else {
+      File oM = new File(oF.absolutePath + ".map")
+      if (emitSourceMap) {
+        options.setSourceMapFile(oM.toURI())
+      }
       try {
-        oF.write(compiler.compileFile(inputFile, outputFile, options).getCss())
+        Output output = compiler.compileFile(inputFile, outputFile, options)
+        
+        oF.write(output.getCss())
+        
+        if (emitSourceMap) {
+          oM.write(output.getSourceMap())
+        }
 
         println("Compiled successfully");
       } catch (CompilationException e) {

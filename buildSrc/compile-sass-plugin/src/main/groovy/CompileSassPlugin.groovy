@@ -16,6 +16,7 @@ class CompileSassPlugin implements Plugin<Project> {
         sassDir = project.sass.sassDir
         cssDir = project.sass.cssDir
         importPath = project.sass.importPath
+        emitSourceMap = project.sass.emitSourceMap
         sasscCmd = project.sass.sasscCmd
       }
     }
@@ -27,6 +28,7 @@ class CompileSassPluginExtension {
   def sassDir
   def importPath
   def cssDir
+  boolean emitSourceMap
   String sasscCmd
 }
 
