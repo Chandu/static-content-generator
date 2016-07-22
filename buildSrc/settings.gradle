@@ -1,2 +1,2 @@
 include \
-  "compile-sass-plugin"
+  "compile-sass-plugin", "generate-html-plugin"

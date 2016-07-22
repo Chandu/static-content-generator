@@ -1,20 +1,9 @@
-import groovy.io.FileType
-
-import org.thymeleaf.TemplateEngine
-import org.thymeleaf.templateresolver.*
-import org.thymeleaf.context.Context
-
-import com.eclipsesource.json.*
-import groovy.json.JsonSlurper
-
 buildscript {
   repositories {
     jcenter()
     maven { url "http://dl.bintray.com/robfletcher/gradle-plugins" }
   }
   dependencies {
-    classpath "org.thymeleaf:thymeleaf:$thymeleaf_version"
-    classpath "com.eclipsesource.minimal-json:minimal-json:$minimalJson_version"
   }
 }
 
@@ -28,6 +17,7 @@ repositories {
 }
 
 apply plugin: 'com.github.mr-july.sass'
+apply plugin: 'com.github.mr-july.html'
 
 
 sass {
@@ -35,6 +25,13 @@ sass {
   sassDir = project.file('src/main/webapp/resources/scss')
   cssDir = project.file('build/site/resources/css')
   importPath = project.files('src/main/webapp/resources/lib/bootstrap/stylesheets')
+}
+
+htmlGenerator {
+  templateRoot = project.file("src/main/webapp/WEB-INF")
+  dataRoot = project.file("src/main/webapp/WEB-INF/data")
+  srcContent = project.file("src/main/webapp/WEB-INF/content")
+  generatedFileDir = project.file("${project.buildDir}/site")
 }
 
 
@@ -57,7 +54,7 @@ task copyAssets(type: Copy) {
 }
 
 
-task generateSite(type: GenerateHtml, group: "Site Generator", dependsOn: ['compileSass', 'copyAssets'], description: "Outputs site to build directory") {
+task generateSite(group: "Site Generator", dependsOn: ['compileSass', 'generateHtml', 'copyAssets'], description: "Outputs site to build directory") {
 }
 
 
@@ -66,126 +63,3 @@ task("preview", group: "Site Generator", dependsOn:"generateSite", description: 
 }
 
 defaultTasks 'generateSite'
-
-
-
-/**
- * generate static html files from Thymeleaf templates
- */
-class GenerateHtml extends DefaultTask {
-  File templateRoot = project.file("src/main/webapp/WEB-INF")
-  @InputDirectory
-  File dataRoot = project.file("src/main/webapp/WEB-INF/data")
-
-  @InputDirectory
-  File srcContent = project.file("src/main/webapp/WEB-INF/content")
-  // TODO FIXME: should be removed?
-  @InputDirectory
-  File srcTemplates = project.file("src/main/webapp/WEB-INF/templates")
-
-  @OutputDirectory
-  File generatedFileDir = project.file("${project.buildDir}/site")
-
-
-  def templateEngine = createTemplateEngine()
-  // application-wide JSON object (available for each page)
-  def globalJson = Json.parse("{}")
-
-  @TaskAction
-  public void perform() {
-    init()
-
-    processSourceDir(srcContent)
-  }
-
-
-  /**
-   * initialization
-   */
-  def init() {
-    def jsonFile = new File("${dataRoot}/app.json")
-
-    if (jsonFile.exists()) {
-      globalJson = Json.parse(jsonFile.text)
-    }
-  }
-
-
-  /**
-   * instantiate the Thymeleaf templating engine
-   */
-  private TemplateEngine createTemplateEngine() {
-    TemplateEngine templateEngine = new TemplateEngine()
-    FileTemplateResolver fileTemplateResolver = new FileTemplateResolver()
-    fileTemplateResolver.setTemplateMode("HTML")
-    fileTemplateResolver.setPrefix("${templateRoot}/")
-    fileTemplateResolver.setSuffix(".html")
-    templateEngine.setTemplateResolver(fileTemplateResolver)
-
-    return templateEngine
-  }
-
-
-  /**
-   * go through specified dir, containing HTML files and process them
-   */
-  def processSourceDir(root) {
-    root.eachDir() { d ->
-      processSourceDir(d)
-    }
-    root.eachFileMatch(~/^[^_].*\.html/) {file ->
-      processThymeleafFile(file)
-    }
-  }
-
-
-  /**
-   * process given Thymeleaf file
-   */
-  public void processThymeleafFile(f) {
-    def template = getTemplateForFile(f)
-    println("Processing ${f}")
-    Context context = new Context(Locale.US, getDataForTemplate(template))
-
-    getOutputFile(f).write(templateEngine.process(template, context))
-  }
-
-
-  /**
-   * get the JSON "back-end" object, available for the specified
-   * Thymeleaf template
-   */
-  def getDataForTemplate(template) {
-    def json = Json.parse("{}")
-    json.merge(globalJson)
-    json.merge(Json.parse("{\"template\":\"${template}\"}"))
-
-    def jf = project.file("${dataRoot}/${template}.json")
-    if (jf.exists()) {
-      println("Processing JSON: ${jf}")
-      json.merge(Json.parse(jf.text))
-    }
-    def jsonSlurp = new JsonSlurper()
-
-    return jsonSlurp.parseText(json.toString())
-  }
-
-
-  /**
-   *  calculate the template name (relative path) for given file.
-   */
-  public String  getTemplateForFile(f) {
-    def filePath = f.absolutePath
-    def relativePath = templateRoot.toURI().relativize(f.toURI()).toString()
-    return relativePath - ".html"
-  }
-
-
-  /* Creates a file including any directories along the path which do not exist */
-  def getOutputFile(f) {
-    def filePath = f.absolutePath
-    def relativePath = srcContent.toURI().relativize(f.toURI()).toString()
-
-    return  project.file("${generatedFileDir}/${relativePath}")
-  }
-}

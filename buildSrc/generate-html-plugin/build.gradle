@@ -1,0 +1,15 @@
+apply plugin: 'base'
+apply plugin: 'groovy'
+
+repositories {
+  mavenCentral()
+}
+
+
+dependencies {
+  compile gradleApi()
+  compile localGroovy()
+
+  compile "org.thymeleaf:thymeleaf:$thymeleaf_version"
+  compile "com.eclipsesource.minimal-json:minimal-json:$minimalJson_version"
+}
